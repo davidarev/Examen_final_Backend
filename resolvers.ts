@@ -29,14 +29,10 @@ type DeleteRestaurantParams = {
 export const resolvers = {
     Query: {
         getRestaurants: async (_: unknown, params: GetRestaurantsParams, contexto: Contexto): Promise<RestauranteModel[]> => {
-            const {ciudad} = params
-            if(!ciudad) throw new GraphQLError("ERROR: No se han introducido todos los parametros");
             const restaurantes = await contexto.colectionRestaurantes.find({ciudad: ciudad}).toArray();
             return restaurantes;
         },
         getRestaurant: async (_: unknown, params: GetRestaurantParams, contexto: Contexto): Promise<RestauranteModel | null> => {
-            const {id} = params
-            if(!id) throw new GraphQLError("ERROR: No se han introducido todos los parametros");
             const restaurante = await contexto.colectionRestaurantes.findOne({_id: new ObjectId(id)});
             return restaurante;
         },
@@ -89,8 +85,6 @@ export const resolvers = {
 
         },
         deleteRestaurant: async (_: unknown, params: DeleteRestaurantParams, contexto: Contexto): Promise<boolean> => {
-            const {id} = params
-            if(!id) throw new GraphQLError("ERROR: No se han introducido todos los parametros");
             const {deletedCount} = await contexto.colectionRestaurantes.deleteOne({_id: new ObjectId(id)});
             return deletedCount === 1;
         }
