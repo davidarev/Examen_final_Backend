@@ -2,6 +2,7 @@ import { Collection, ObjectId } from "mongodb";
 import { APICity, APIPhone, APIWeather, APIWorldTime, RestauranteModel } from "./types.ts";
 import { GraphQLError } from "graphql";
 
+//Tipos a modo de Contexto y Parametros a utilizar en los resolvers y las querys
 type Contexto = {
     colectionRestaurantes: Collection<RestauranteModel>
 }
@@ -28,7 +29,9 @@ type DeleteRestaurantParams = {
 export const resolvers = {
     Query: {
         getRestaurants: async (_: unknown, params: GetRestaurantsParams, contexto: Contexto): Promise<RestauranteModel[]> => {
-            const restaurantes = await contexto.colectionRestaurantes.find({ciudad: params.ciudad}).toArray();
+            const {ciudad} = params
+            if(!ciudad) throw new GraphQLError("ERROR: No se han introducido todos los parametros");
+            const restaurantes = await contexto.colectionRestaurantes.find({ciudad: ciudad}).toArray();
             return restaurantes;
         },
         getRestaurant: async (_: unknown, params: GetRestaurantParams, contexto: Contexto): Promise<RestauranteModel | null> => {
@@ -58,7 +61,8 @@ export const resolvers = {
             if(data_phone.status !== 200) throw new GraphQLError("ERROR: No se ha conectado correctamente a la API Validate Phone");
             const response_phone: APIPhone = await data_phone.json();
             if(response_phone.is_valid === false) throw new GraphQLError("ERROR: El telefono introducido no es valido");
-            const pais = response_phone.country;
+            //Tomo el dato 'country' de esta API en lugar de la API City debido a que esta API devuelve el pais entero (Spain), mientras que API City devuelve (ES)
+            const pais = response_phone.country; 
 
             //API City
             const url_city = `https://api.api-ninjas.com/v1/city?name=${ciudad}`
@@ -71,8 +75,8 @@ export const resolvers = {
             const response_city: APICity = await data_city.json();
             const latitud = response_city.latitude; //Por alguna razón, es valor es 'undefined'
             const longitud = response_city.longitude; //Por alguna razón, es valor es 'undefined'
-            //console.log("Latitud: ", latitud);
-            //console.log("Longitud: ", longitud);
+            //console.log("Latitud: ", latitud); // --> Latitud: undefined
+            //console.log("Longitud: ", longitud); // --> Latitud: undefined
 
             const {insertedId} = await contexto.colectionRestaurantes.insertOne({
                 nombre, direccion, ciudad, telefono, pais, latitud, longitud
@@ -93,6 +97,7 @@ export const resolvers = {
     },
     Restaurante: {
         id: (parent: RestauranteModel): string => parent._id!.toString(),
+        //Unifico la direccion del restaurante en una sola, usando la direcion (calle y numero), la ciudad, y el pais
         direccion_restaurante: (parent: RestauranteModel): string => {
             const direccion = `${parent.direccion}, ${parent.ciudad}, ${parent.pais}`
             return direccion;
