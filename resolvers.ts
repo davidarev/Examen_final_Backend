@@ -29,11 +29,11 @@ type DeleteRestaurantParams = {
 export const resolvers = {
     Query: {
         getRestaurants: async (_: unknown, params: GetRestaurantsParams, contexto: Contexto): Promise<RestauranteModel[]> => {
-            const restaurantes = await contexto.colectionRestaurantes.find({ciudad: ciudad}).toArray();
+            const restaurantes = await contexto.colectionRestaurantes.find({ciudad: params.ciudad}).toArray();
             return restaurantes;
         },
         getRestaurant: async (_: unknown, params: GetRestaurantParams, contexto: Contexto): Promise<RestauranteModel | null> => {
-            const restaurante = await contexto.colectionRestaurantes.findOne({_id: new ObjectId(id)});
+            const restaurante = await contexto.colectionRestaurantes.findOne({_id: new ObjectId(params.id)});
             return restaurante;
         },
     },
@@ -85,7 +85,7 @@ export const resolvers = {
 
         },
         deleteRestaurant: async (_: unknown, params: DeleteRestaurantParams, contexto: Contexto): Promise<boolean> => {
-            const {deletedCount} = await contexto.colectionRestaurantes.deleteOne({_id: new ObjectId(id)});
+            const {deletedCount} = await contexto.colectionRestaurantes.deleteOne({_id: new ObjectId(params.id)});
             return deletedCount === 1;
         }
     },
